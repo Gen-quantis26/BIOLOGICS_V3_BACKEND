@@ -60,7 +60,11 @@ def generate_preformulation_pdf(data, user=None):
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(50, 8, 'SMILES:', 0, 0)
     pdf.set_font('Arial', '', 10)
-    pdf.multi_cell(0, 8, str(data.get('smiles')))
+    
+    # Insert spaces every 60 characters so FPDF can safely wrap the long unbroken string
+    smiles_str = str(data.get('smiles', ''))
+    wrapped_smiles = " ".join([smiles_str[i:i+60] for i in range(0, len(smiles_str), 60)])
+    pdf.multi_cell(0, 8, wrapped_smiles)
     pdf.ln(5)
 
     pdf.set_fill_color(26, 35, 126)
@@ -121,11 +125,13 @@ def generate_preformulation_pdf(data, user=None):
     pdf.set_text_color(0, 0, 0)
     pdf.set_font('Arial', '', 11)
 
+    pdf.set_x(10)
     risks = data.get('stability_risk', [])
     if not risks:
         pdf.cell(0, 8, 'No significant stability risks identified.', 0, 1)
     else:
         for risk in risks:
+            pdf.set_x(10)
             pdf.multi_cell(0, 8, f"- {risk}")
 
     pdf.ln(5)
@@ -202,6 +208,7 @@ def generate_formulation_pdf(form_data, pre_data, user=None):
         rationale.append("Stability risks are manageable; Trehalose is used for cryoprotection/stabilization.")
 
     for r in rationale:
+        pdf.set_x(10)
         pdf.multi_cell(0, 8, f"- {r}")
 
     pdf.ln(5)

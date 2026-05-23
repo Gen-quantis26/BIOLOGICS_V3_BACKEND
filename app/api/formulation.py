@@ -27,7 +27,14 @@ async def design_formulation(request: FormulationRequest):
         compound_id=request.compound_id,
         **design_data
     )
-    await design.insert()
+    
+    existing = await FormulationDesign.find_one(FormulationDesign.compound_id == request.compound_id)
+    if existing:
+        design.id = existing.id
+        await design.save()
+    else:
+        await design.insert()
+        
     return design
 
 @router.get("/designs", response_model=List[FormulationDesign])
@@ -36,14 +43,14 @@ async def get_all_designs():
 
 @router.get("/design/{compound_id}", response_model=FormulationDesign)
 async def get_design(compound_id: str):
-    design = await FormulationDesign.find_one(FormulationDesign.compound_id == compound_id)
+    design = await FormulationDesign.find(FormulationDesign.compound_id == compound_id).sort("-_id").first_or_none()
     if not design:
         raise HTTPException(status_code=404, detail="Design not found")
     return design
 
 @router.get("/design/{compound_id}/pdf")
 async def get_design_pdf(compound_id: str, user: User = Depends(get_current_user)):
-    design = await FormulationDesign.find_one(FormulationDesign.compound_id == compound_id)
+    design = await FormulationDesign.find(FormulationDesign.compound_id == compound_id).sort("-_id").first_or_none()
     if not design:
         raise HTTPException(status_code=404, detail="Design not found")
     
