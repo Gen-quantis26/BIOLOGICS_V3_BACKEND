@@ -24,7 +24,14 @@ async def analyze_preformulation(request: PreformulationRequest):
         smiles=request.smiles,
         **properties
     )
-    await report.insert()
+    
+    existing = await PreformulationReport.find_one(PreformulationReport.compound_id == request.compound_id)
+    if existing:
+        report.id = existing.id
+        await report.save()
+    else:
+        await report.insert()
+        
     return report
 
 @router.get("/reports", response_model=List[PreformulationReport])
@@ -33,14 +40,14 @@ async def get_all_reports():
 
 @router.get("/report/{compound_id}", response_model=PreformulationReport)
 async def get_report(compound_id: str):
-    report = await PreformulationReport.find_one(PreformulationReport.compound_id == compound_id)
+    report = await PreformulationReport.find(PreformulationReport.compound_id == compound_id).sort("-_id").first_or_none()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     return report
 
 @router.get("/report/{compound_id}/pdf")
 async def get_report_pdf(compound_id: str, user: User = Depends(get_current_user)):
-    report = await PreformulationReport.find_one(PreformulationReport.compound_id == compound_id)
+    report = await PreformulationReport.find(PreformulationReport.compound_id == compound_id).sort("-_id").first_or_none()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     

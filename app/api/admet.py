@@ -68,8 +68,8 @@ async def run_admet_prediction(job_id: str):
         "Solubility": max(0, min(10, 10 + (props.get("LogP", 0) * -1.5))),
         "Absorption": 9 if props.get("IsLipinskiCompliant", False) else 5,
         "Safety": 8 if props.get("MolWt", 0) < 400 else 6,
-        "Clearance": round(4.5 + (random.random() * 3), 1),
-        "Metabolism": round(6 + (random.random() * 2), 1)
+        "Clearance": max(1.0, min(10.0, round(10 - (props.get("MolWt", 0) / 100), 1))),
+        "Metabolism": max(1.0, min(10.0, round(5 + (props.get("LogP", 0) * 0.5), 1)))
     }
 
     results = {
@@ -79,7 +79,7 @@ async def run_admet_prediction(job_id: str):
         "interpretation": f"DeepTox GNN suggests: {gnn_tox}. BBBP Oracle predicts: {bbbp_status}.",
         "admet_metrics": {
             "LogP": round(props.get("LogP", 0), 2),
-            "Solubility_LogS": round(-1.0 - (random.random() * 3), 2),
+            "Solubility_LogS": round(-1.0 - (props.get("LogP", 0) * 0.8), 2),
             "BBBP_Model_Result": bbbp_status,
             "Tox21_Hepatotoxicity": "Safe" if props.get("TPSA", 0) > 60 else "Moderate Risk",
             "ClinTox_FDA_Approval": "High probability" if props.get("SA_Score", 0) < 4.0 else "Uncertain",
